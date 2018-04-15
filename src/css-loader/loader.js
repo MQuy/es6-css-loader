@@ -144,8 +144,7 @@ module.exports = function(content, map) {
 			"// module\n" +
 			moduleJs + "\n\n" +
 			"// exports\n" +
-			exportJs + "\n" +
-			"export default exports;"
+			exportJs
 		);
 	}.bind(this));
 };

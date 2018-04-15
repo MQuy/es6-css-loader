@@ -1,0 +1,17 @@
+{
+  "name": "es6-css-loader",
+  "version": "0.0.1",
+  "description": "ES6 css loader",
+  "main": "src/index.js",
+  "keywords": [
+    "webpack",
+    "plugin",
+    "unused",
+    "deadcode"
+  ],
+  "author": "MQuy",
+  "license": "MIT",
+  "engines": {
+    "node": ">=6.11.5"
+  }
+}

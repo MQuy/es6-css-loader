@@ -18,6 +18,7 @@ module.exports = function(content, map) {
 	var camelCaseKeys = query.camelCase || query.camelcase;
 	var sourceMap = query.sourceMap || false;
 	var resolve = createResolver(query.alias);
+	var jsModules = query.jsModules || 'es6';
 
 	if(sourceMap) {
 		if (map) {
@@ -67,19 +68,25 @@ module.exports = function(content, map) {
 				return "exports.push([module.id, " +
 					JSON.stringify("@import url(" + imp.url + ");") + ", " +
 					JSON.stringify(imp.mediaQuery) + "]);";
+			} else if (jsModules == "es6") {
+				return "import { " + imp.export + " } from " + JSON.stringify(imp.url) + ";";
+			} else {
+				var importUrl = importUrlPrefix + imp.url;
+				return "exports.i(require(" + loaderUtils.stringifyRequest(this, importUrl) + "), " + JSON.stringify(imp.mediaQuery) + ");";
 			}
 		}, this).join("\n");
-		importJs += result.importItems.map(function(imp) {
-			return "import { " + imp.export + " } from " + JSON.stringify(imp.url) + ";";
-		}).join("\n");
-		console.log(importJs)
 
 		function importItemMatcher(item) {
 			var match = result.importItemRegExp.exec(item);
 			var idx = +match[1];
 			var importItem = result.importItems[idx];
 			var importUrl = importUrlPrefix + importItem.url;
-			return "\" + " + importItem.export + " + \"";
+			if (jsModules == "es6") {
+				return "\" + " + importItem.export + " + \"";
+			} else {
+				return "\" + require(" + loaderUtils.stringifyRequest(this, importUrl) + ").locals" +
+					"[" + JSON.stringify(importItem.export) + "] + \"";
+			}
 		}
 
 		cssAsString = cssAsString.replace(result.importItemRegExpG, importItemMatcher.bind(this));
@@ -111,11 +118,13 @@ module.exports = function(content, map) {
 
 		var exportJs = compileExports(result, importItemMatcher.bind(this), camelCaseKeys);
 		if (exportJs) {
-			exportJs = "exports.locals = " + exportJs + ";\n";
+			exportJs = "exports.locals = " + exportJs + ";";
 		}
-		exportJs += Object.keys(result.exports).map(function(key) {
-			return "export const " + key + " = exports.locals[\"" + key +"\"];";
-		}).join("\n");
+		if (jsModules == "es6") {
+			exportJs += "\n" + Object.keys(result.exports).map(function(key) {
+				return "export const " + key + " = exports.locals[\"" + key +"\"];";
+			}).join("\n");
+		}
 
 		var moduleJs;
 		if(sourceMap && result.map) {
@@ -136,7 +145,7 @@ module.exports = function(content, map) {
 
 		// embed runtime
 		callback(null, urlEscapeHelper +
-			"const exports = require(" +
+			"exports = " + (jsModules == "es6" ? "" : " module.exports = ") + " require(" +
 			loaderUtils.stringifyRequest(this, require.resolve("./css-base.js")) +
 			")(" + sourceMap + ");\n" +
 			"// imports\n" +
@@ -144,7 +153,6 @@ module.exports = function(content, map) {
 			"// module\n" +
 			moduleJs + "\n\n" +
 			"// exports\n" +
-			exportJs
-		);
+			exportJs);
 	}.bind(this));
 };

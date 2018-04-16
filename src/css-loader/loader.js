@@ -145,7 +145,7 @@ module.exports = function(content, map) {
 
 		// embed runtime
 		callback(null, urlEscapeHelper +
-			"exports = " + (jsModules == "es6" ? "" : " module.exports = ") + " require(" +
+			(jsModules == "es6" ? "const exports = " : "exports = module.exports = ") + " require(" +
 			loaderUtils.stringifyRequest(this, require.resolve("./css-base.js")) +
 			")(" + sourceMap + ");\n" +
 			"// imports\n" +

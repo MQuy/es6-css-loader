@@ -3,11 +3,13 @@ const loaderUtils = require("loader-utils");
 const validateOptions = require('schema-utils');
 const fs = require('fs');
 const NativeModule = require('module');
+const chalk = require('chalk');
 const NodeTemplatePlugin = require('webpack/lib/node/NodeTemplatePlugin');
 const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin');
 const LibraryTemplatePlugin = require('webpack/lib/LibraryTemplatePlugin');
 const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin');
 const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin');
+const { filterErrors } = require('./lib/namedExport');
 
 const exec = (loaderContext, code, filename) => {
   const module = new NativeModule(filename, loaderContext);
@@ -72,11 +74,24 @@ module.exports.pitch = function pitch(request) {
     }
     let resultSource = '// extracted by style-loader';
     if (locals && typeof resultSource !== 'undefined') {
-      resultSource += "\n" + Object.keys(locals).map(function(key) {
-        return "export const " + key + " = " + JSON.stringify(locals[key]) + ";";
-      }).join("\n");
-    }
+			const errors = filterErrors(locals);
 
+			if (errors.length > 0) {
+				console.log(chalk.hex('#e83a30')("\n" + this.resourcePath + "\n    • " + errors.join("\n    • ")));
+				return callback(null, "");
+			} else {
+				resultSource += "\n" + Object.keys(locals).map(function(key) {
+					return "export const " + key + " = " + JSON.stringify(locals[key]) + ";";
+				}).join("\n");
+
+				if (query.typing) {
+					const types = Object.keys(locals).map(function(key) {
+						return "export const " + key + ": string;";
+					}).join("\n");
+					fs.writeFile(this.resourcePath + ".d.ts", types);
+				}
+			}
+    }
 
     return callback(null, template() + "\n" + resultSource);
 	});

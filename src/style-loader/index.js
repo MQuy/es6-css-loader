@@ -88,7 +88,7 @@ module.exports.pitch = function pitch(request) {
 					const types = Object.keys(locals).map(function(key) {
 						return "export const " + key + ": string;";
 					}).join("\n");
-					fs.writeFile(this.resourcePath + ".d.ts", types);
+					fs.writeFile(this.resourcePath + ".d.ts", types, function() {});
 				}
 			}
     }

@@ -138,16 +138,16 @@ module.exports.pitch = function pitch(request) {
 			"			for(key in b) idx--;",
 			"",
 			"			return idx === 0;",
-			"		}(content.locals, newContent.locals));",
+			"		}(_content.locals, newContent.locals));",
 			"",
 			// This error is caught and not shown and causes a full reload
 			"		if(!locals) throw new Error('Aborting CSS HMR due to changed css-modules locals.');",
 			"",
-			"		update(newContent);",
+			"		_update(newContent);",
 			"	});",
 			"",
 			// When the module is disposed, remove the <style> tags
-			"	module.hot.dispose(function() { update(); });",
+			"	module.hot.dispose(function() { _update(); });",
 			"}"
 		].join("\n");
 
@@ -156,23 +156,23 @@ module.exports.pitch = function pitch(request) {
 			// Adds CSS to the DOM by adding a <style> tag
 			"",
 			// Load styles
-			"var content = require(" + loaderUtils.stringifyRequest(this, "!!" + request) + ");",
+			"var _content = require(" + loaderUtils.stringifyRequest(this, "!!" + request) + ");",
 			"",
-			"if(typeof content === 'string') content = [[module.id, content, '']];",
+			"if(typeof _content === 'string') _content = [[module.id, _content, '']];",
 			"",
 			// Transform styles",
-			"var transform;",
-			"var insertInto;",
+			"var _transform;",
+			"var _insertInto;",
 			"",
-			options.transform ? "transform = require(" + loaderUtils.stringifyRequest(this, "!" + path.resolve(options.transform)) + ");" : "",
+			options.transform ? "_transform = require(" + loaderUtils.stringifyRequest(this, "!" + path.resolve(options.transform)) + ");" : "",
 			 "",
-			"var options = " + JSON.stringify(options),
+			"var _options = " + JSON.stringify(options),
 			"",
-			"options.transform = transform",
-			"options.insertInto = " + insertInto + ";",
+			"_options.transform = _transform",
+			"_options.insertInto = " + insertInto + ";",
 			"",
 			// Add styles to the DOM
-			"var update = require(" + loaderUtils.stringifyRequest(this, "!" + path.join(__dirname, "lib", "addStyles.js")) + ")(content, options);",
+			"var _update = require(" + loaderUtils.stringifyRequest(this, "!" + path.join(__dirname, "lib", "addStyles.js")) + ")(_content, _options);",
 			"",
 			options.hmr ? hmr : ""
 		].join("\n");

@@ -1,6 +1,6 @@
 {
   "name": "es6-css-loader",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "ES6 css loader",
   "main": "src/index.js",
   "keywords": ["webpack", "plugin", "unused", "deadcode"],

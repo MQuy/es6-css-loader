@@ -151,7 +151,7 @@ function pitch(request) {
     let resultSource = '// extracted by mini-css-extract-plugin';
     if (locals && typeof resultSource !== 'undefined') {
       resultSource += "\n" + Object.keys(locals).map(function(key) {
-        return "export const " + key + " = " + JSON.stringify(locals[key]) + ";";
+        return "export var " + key + " = " + JSON.stringify(locals[key]) + ";";
       }).join("\n");
     }
 

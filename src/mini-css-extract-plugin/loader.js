@@ -1,55 +1,18 @@
-'use strict';
+const NativeModule = require('module');
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.pitch = pitch;
+const loaderUtils = require('loader-utils');
+const NodeTemplatePlugin = require('webpack/lib/node/NodeTemplatePlugin');
+const NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin');
+const LibraryTemplatePlugin = require('webpack/lib/LibraryTemplatePlugin');
+const SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin');
+const LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin');
 
-exports.default = function () {};
-
-var _fs = require('fs');
-
-var _fs2 = _interopRequireDefault(_fs);
-
-var _path = require('path');
-
-var _path2 = _interopRequireDefault(_path);
-
-var _module = require('module');
-
-var _module2 = _interopRequireDefault(_module);
-
-var _loaderUtils = require('loader-utils');
-
-var _loaderUtils2 = _interopRequireDefault(_loaderUtils);
-
-var _NodeTemplatePlugin = require('webpack/lib/node/NodeTemplatePlugin');
-
-var _NodeTemplatePlugin2 = _interopRequireDefault(_NodeTemplatePlugin);
-
-var _NodeTargetPlugin = require('webpack/lib/node/NodeTargetPlugin');
-
-var _NodeTargetPlugin2 = _interopRequireDefault(_NodeTargetPlugin);
-
-var _LibraryTemplatePlugin = require('webpack/lib/LibraryTemplatePlugin');
-
-var _LibraryTemplatePlugin2 = _interopRequireDefault(_LibraryTemplatePlugin);
-
-var _SingleEntryPlugin = require('webpack/lib/SingleEntryPlugin');
-
-var _SingleEntryPlugin2 = _interopRequireDefault(_SingleEntryPlugin);
-
-var _LimitChunkCountPlugin = require('webpack/lib/optimize/LimitChunkCountPlugin');
-
-var _LimitChunkCountPlugin2 = _interopRequireDefault(_LimitChunkCountPlugin);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-const NS = _path2.default.dirname(_fs2.default.realpathSync(__filename));
+const MODULE_TYPE = 'css/mini-extract';
+const pluginName = 'mini-css-extract-plugin';
 
 const exec = (loaderContext, code, filename) => {
-  const module = new _module2.default(filename, loaderContext);
-  module.paths = _module2.default._nodeModulePaths(loaderContext.context); // eslint-disable-line no-underscore-dangle
+  const module = new NativeModule(filename, loaderContext);
+  module.paths = NativeModule._nodeModulePaths(loaderContext.context); // eslint-disable-line no-underscore-dangle
   module.filename = filename;
   module._compile(code, filename); // eslint-disable-line no-underscore-dangle
   return module.exports;
@@ -65,46 +28,63 @@ const findModuleById = (modules, id) => {
 };
 
 function pitch(request) {
-  const query = _loaderUtils2.default.getOptions(this) || {};
+  const query = loaderUtils.getOptions(this) || {};
   const loaders = this.loaders.slice(this.loaderIndex + 1);
   this.addDependency(this.resourcePath);
   const childFilename = '*'; // eslint-disable-line no-path-concat
-  const publicPath = typeof query.publicPath === 'string' ? query.publicPath : this._compilation.outputOptions.publicPath;
+  const publicPath =
+    typeof query.publicPath === 'string'
+      ? query.publicPath
+      : this._compilation.outputOptions.publicPath;
   const outputOptions = {
     filename: childFilename,
-    publicPath
+    publicPath,
   };
-  const childCompiler = this._compilation.createChildCompiler(`mini-css-extract-plugin ${request}`, outputOptions);
-  new _NodeTemplatePlugin2.default(outputOptions).apply(childCompiler);
-  new _LibraryTemplatePlugin2.default(null, 'commonjs2').apply(childCompiler);
-  new _NodeTargetPlugin2.default().apply(childCompiler);
-  new _SingleEntryPlugin2.default(this.context, `!!${request}`, 'mini-css-extract-plugin').apply(childCompiler);
-  new _LimitChunkCountPlugin2.default({ maxChunks: 1 }).apply(childCompiler);
-  // We set loaderContext[NS] = false to indicate we already in
+  const childCompiler = this._compilation.createChildCompiler(
+    `${pluginName} ${request}`,
+    outputOptions
+  );
+  new NodeTemplatePlugin(outputOptions).apply(childCompiler);
+  new LibraryTemplatePlugin(null, 'commonjs2').apply(childCompiler);
+  new NodeTargetPlugin().apply(childCompiler);
+  new SingleEntryPlugin(this.context, `!!${request}`, pluginName).apply(
+    childCompiler
+  );
+  new LimitChunkCountPlugin({ maxChunks: 1 }).apply(childCompiler);
+  // We set loaderContext[MODULE_TYPE] = false to indicate we already in
   // a child compiler so we don't spawn another child compilers from there.
-  childCompiler.hooks.thisCompilation.tap('mini-css-extract-plugin loader', compilation => {
-    compilation.hooks.normalModuleLoader.tap('mini-css-extract-plugin loader', (loaderContext, module) => {
-      loaderContext[NS] = false; // eslint-disable-line no-param-reassign
-      if (module.request === request) {
-        module.loaders = loaders.map(loader => {
-          // eslint-disable-line no-param-reassign
-          return {
-            loader: loader.path,
-            options: loader.options,
-            ident: loader.ident
-          };
-        });
-      }
-    });
-  });
+  childCompiler.hooks.thisCompilation.tap(
+    `${pluginName} loader`,
+    (compilation) => {
+      compilation.hooks.normalModuleLoader.tap(
+        `${pluginName} loader`,
+        (loaderContext, module) => {
+          loaderContext.emitFile = this.emitFile;
+          loaderContext[MODULE_TYPE] = false; // eslint-disable-line no-param-reassign
+          if (module.request === request) {
+            // eslint-disable-next-line no-param-reassign
+            module.loaders = loaders.map((loader) => {
+              return {
+                loader: loader.path,
+                options: loader.options,
+                ident: loader.ident,
+              };
+            });
+          }
+        }
+      );
+    }
+  );
 
   let source;
-  childCompiler.hooks.afterCompile.tap('mini-css-extract-plugin', compilation => {
-    source = compilation.assets[childFilename] && compilation.assets[childFilename].source();
+  childCompiler.hooks.afterCompile.tap(pluginName, (compilation) => {
+    source =
+      compilation.assets[childFilename] &&
+      compilation.assets[childFilename].source();
 
     // Remove all chunk assets
-    compilation.chunks.forEach(chunk => {
-      chunk.files.forEach(file => {
+    compilation.chunks.forEach((chunk) => {
+      chunk.files.forEach((file) => {
         delete compilation.assets[file]; // eslint-disable-line no-param-reassign
       });
     });
@@ -117,10 +97,10 @@ function pitch(request) {
     if (compilation.errors.length > 0) {
       return callback(compilation.errors[0]);
     }
-    compilation.fileDependencies.forEach(dep => {
+    compilation.fileDependencies.forEach((dep) => {
       this.addDependency(dep);
     }, this);
-    compilation.contextDependencies.forEach(dep => {
+    compilation.contextDependencies.forEach((dep) => {
       this.addContextDependency(dep);
     }, this);
     if (!source) {
@@ -134,21 +114,21 @@ function pitch(request) {
       if (!Array.isArray(text)) {
         text = [[null, text]];
       } else {
-        text = text.map(line => {
+        text = text.map((line) => {
           const module = findModuleById(compilation.modules, line[0]);
           return {
             identifier: module.identifier(),
             content: line[1],
             media: line[2],
-            sourceMap: line[3]
+            sourceMap: line[3],
           };
         });
       }
-      this[NS](text);
+      this[MODULE_TYPE](text);
     } catch (e) {
       return callback(e);
     }
-    let resultSource = '// extracted by mini-css-extract-plugin';
+    let resultSource = `// extracted by ${pluginName}`;
     if (locals && typeof resultSource !== 'undefined') {
       resultSource += "\n" + Object.keys(locals).map(function(key) {
         return "export var " + key + " = " + JSON.stringify(locals[key]) + ";";
@@ -158,3 +138,5 @@ function pitch(request) {
     return callback(null, resultSource);
   });
 }
+
+exports.pitch = pitch;

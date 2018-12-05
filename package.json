@@ -1,8 +1,8 @@
 {
   "name": "es6-css-loader",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "ES6 css loader",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "keywords": [
     "webpack",
     "plugin",

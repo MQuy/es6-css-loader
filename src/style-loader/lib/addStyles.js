@@ -1,7 +1,4 @@
-/*
-	MIT License http://www.opensource.org/licenses/mit-license.php
-	Author Tobias Koppers @sokra
-*/
+/* eslint-disable */
 
 var stylesInDom = {};
 
@@ -9,7 +6,10 @@ var memoize = function(fn) {
   var memo;
 
   return function() {
-    if (typeof memo === "undefined") memo = fn.apply(this, arguments);
+    if (typeof memo === "undefined") {
+      memo = fn.apply(this, arguments);
+    }
+
     return memo;
   };
 };
@@ -42,8 +42,10 @@ var getElement = (function(fn) {
     if (typeof target === "function") {
       return target();
     }
+
     if (typeof memo[target] === "undefined") {
       var styleTarget = getTarget.call(this, target, parent);
+
       // Special case to return head of iframe instead of iframe itself
       if (window.HTMLIFrameElement && styleTarget instanceof window.HTMLIFrameElement) {
         try {
@@ -54,8 +56,10 @@ var getElement = (function(fn) {
           styleTarget = null;
         }
       }
+
       memo[target] = styleTarget;
     }
+
     return memo[target];
   };
 })();
@@ -68,7 +72,9 @@ var fixUrls = require("./urls");
 
 module.exports = function(list, options) {
   if (typeof DEBUG !== "undefined" && DEBUG) {
-    if (typeof document !== "object") throw new Error("The style-loader cannot be used in a non-browser environment");
+    if (typeof document !== "object") {
+      throw new Error("The style-loader cannot be used in a non-browser environment");
+    }
   }
 
   options = options || {};
@@ -77,13 +83,19 @@ module.exports = function(list, options) {
 
   // Force single-tag solution on IE6-9, which has a hard limit on the # of <style>
   // tags it will allow on a page
-  if (!options.singleton && typeof options.singleton !== "boolean") options.singleton = isOldIE();
+  if (!options.singleton && typeof options.singleton !== "boolean") {
+    options.singleton = isOldIE();
+  }
 
   // By default, add <style> tags to the <head> element
-  if (!options.insertInto) options.insertInto = "head";
+  if (!options.insertInto) {
+    options.insertInto = "head";
+  }
 
   // By default, add <style> tags to the bottom of the target
-  if (!options.insertAt) options.insertAt = "bottom";
+  if (!options.insertAt) {
+    options.insertAt = "bottom";
+  }
 
   var styles = listToStyles(list, options);
 
@@ -102,6 +114,7 @@ module.exports = function(list, options) {
 
     if (newList) {
       var newStyles = listToStyles(newList, options);
+
       addStylesToDom(newStyles, options);
     }
 
@@ -109,7 +122,9 @@ module.exports = function(list, options) {
       var domStyle = mayRemove[i];
 
       if (domStyle.refs === 0) {
-        for (var j = 0; j < domStyle.parts.length; j++) domStyle.parts[j]();
+        for (var j = 0; j < domStyle.parts.length; j++) {
+          domStyle.parts[j]();
+        }
 
         delete stylesInDom[domStyle.id];
       }
@@ -156,8 +171,11 @@ function listToStyles(list, options) {
     var sourceMap = item[3];
     var part = { css: css, media: media, sourceMap: sourceMap };
 
-    if (!newStyles[id]) styles.push((newStyles[id] = { id: id, parts: [part] }));
-    else newStyles[id].parts.push(part);
+    if (!newStyles[id]) {
+      styles.push((newStyles[id] = { id: id, parts: [part] }));
+    } else {
+      newStyles[id].parts.push(part);
+    }
   }
 
   return styles;
@@ -182,11 +200,13 @@ function insertStyleElement(options, style) {
     } else {
       target.appendChild(style);
     }
+
     stylesInsertedAtTop.push(style);
   } else if (options.insertAt === "bottom") {
     target.appendChild(style);
   } else if (typeof options.insertAt === "object" && options.insertAt.before) {
     var nextSibling = getElement(options.insertAt.before, target);
+
     target.insertBefore(style, nextSibling);
   } else {
     throw new Error(
@@ -196,10 +216,14 @@ function insertStyleElement(options, style) {
 }
 
 function removeStyleElement(style) {
-  if (style.parentNode === null) return false;
+  if (style.parentNode === null) {
+    return false;
+  }
+
   style.parentNode.removeChild(style);
 
   var idx = stylesInsertedAtTop.indexOf(style);
+
   if (idx >= 0) {
     stylesInsertedAtTop.splice(idx, 1);
   }
@@ -214,6 +238,7 @@ function createStyleElement(options) {
 
   if (options.attrs.nonce === undefined) {
     var nonce = getNonce();
+
     if (nonce) {
       options.attrs.nonce = nonce;
     }
@@ -231,6 +256,7 @@ function createLinkElement(options) {
   if (options.attrs.type === undefined) {
     options.attrs.type = "text/css";
   }
+
   options.attrs.rel = "stylesheet";
 
   addAttrs(link, options.attrs);
@@ -293,7 +319,9 @@ function addStyle(obj, options) {
     remove = function() {
       removeStyleElement(style);
 
-      if (style.href) URL.revokeObjectURL(style.href);
+      if (style.href) {
+        URL.revokeObjectURL(style.href);
+      }
     };
   } else {
     style = createStyleElement(options);
@@ -337,7 +365,9 @@ function applyToSingletonTag(style, index, remove, obj) {
     var cssNode = document.createTextNode(css);
     var childNodes = style.childNodes;
 
-    if (childNodes[index]) style.removeChild(childNodes[index]);
+    if (childNodes[index]) {
+      style.removeChild(childNodes[index]);
+    }
 
     if (childNodes.length) {
       style.insertBefore(cssNode, childNodes[index]);
@@ -371,11 +401,11 @@ function updateLink(link, options, obj) {
   var sourceMap = obj.sourceMap;
 
   /*
-		If convertToAbsoluteUrls isn't defined, but sourcemaps are enabled
-		and there is no publicPath defined then lets turn convertToAbsoluteUrls
-		on by default.  Otherwise default to the convertToAbsoluteUrls option
-		directly
-	*/
+    If convertToAbsoluteUrls isn't defined, but sourcemaps are enabled
+    and there is no publicPath defined then lets turn convertToAbsoluteUrls
+    on by default.  Otherwise default to the convertToAbsoluteUrls option
+    directly
+  */
   var autoFixUrls = options.convertToAbsoluteUrls === undefined && sourceMap;
 
   if (options.convertToAbsoluteUrls || autoFixUrls) {
@@ -396,5 +426,7 @@ function updateLink(link, options, obj) {
 
   link.href = URL.createObjectURL(blob);
 
-  if (oldSrc) URL.revokeObjectURL(oldSrc);
+  if (oldSrc) {
+    URL.revokeObjectURL(oldSrc);
+  }
 }

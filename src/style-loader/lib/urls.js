@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 /**
  * When source maps are enabled, `style-loader` uses a link element with a data-uri to
  * embed the css on the page. This breaks all relative urls because now they are relative to a
@@ -29,29 +31,29 @@ module.exports = function(css) {
 
   // convert each url(...)
   /*
-	This regular expression is just a way to recursively match brackets within
-	a string.
-	 /url\s*\(  = Match on the word "url" with any whitespace after it and then a parens
-	   (  = Start a capturing group
-	     (?:  = Start a non-capturing group
-	         [^)(]  = Match anything that isn't a parentheses
-	         |  = OR
-	         \(  = Match a start parentheses
-	             (?:  = Start another non-capturing groups
-	                 [^)(]+  = Match anything that isn't a parentheses
-	                 |  = OR
-	                 \(  = Match a start parentheses
-	                     [^)(]*  = Match anything that isn't a parentheses
-	                 \)  = Match a end parentheses
-	             )  = End Group
+  This regular expression is just a way to recursively match brackets within
+  a string.
+   /url\s*\(  = Match on the word "url" with any whitespace after it and then a parens
+     (  = Start a capturing group
+       (?:  = Start a non-capturing group
+           [^)(]  = Match anything that isn't a parentheses
+           |  = OR
+           \(  = Match a start parentheses
+               (?:  = Start another non-capturing groups
+                   [^)(]+  = Match anything that isn't a parentheses
+                   |  = OR
+                   \(  = Match a start parentheses
+                       [^)(]*  = Match anything that isn't a parentheses
+                   \)  = Match a end parentheses
+               )  = End Group
               *\) = Match anything and then a close parens
           )  = Close non-capturing group
           *  = Match anything
        )  = Close capturing group
-	 \)  = Match a close parens
-	 /gi  = Get all matches, not the first.  Be case insensitive.
-	 */
-  var fixedCss = css.replace(/url\s*\(((?:[^)(]|\((?:[^)(]+|\([^)(]*\))*\))*)\)/gi, function(fullMatch, origUrl) {
+   \)  = Match a close parens
+   /gi  = Get all matches, not the first.  Be case insensitive.
+   */
+  return css.replace(/url\s*\(((?:[^)(]|\((?:[^)(]+|\([^)(]*\))*\))*)\)/gi, function(fullMatch, origUrl) {
     // strip quotes (if they exist)
     var unquotedOrigUrl = origUrl
       .trim()
@@ -71,20 +73,19 @@ module.exports = function(css) {
     var newUrl;
 
     if (unquotedOrigUrl.indexOf("//") === 0) {
-      //TODO: should we add protocol?
+      // TODO: should we add protocol?
       newUrl = unquotedOrigUrl;
     } else if (unquotedOrigUrl.indexOf("/") === 0) {
-      // path should be relative to the base url
-      newUrl = baseUrl + unquotedOrigUrl; // already starts with '/'
+      // Path should be relative to the base url
+      // already starts with '/'
+      newUrl = baseUrl + unquotedOrigUrl;
     } else {
-      // path should be relative to current directory
-      newUrl = currentDir + unquotedOrigUrl.replace(/^\.\//, ""); // Strip leading './'
+      // Path should be relative to current directory
+      // Strip leading './'
+      newUrl = currentDir + unquotedOrigUrl.replace(/^\.\//, "");
     }
 
     // send back the fixed url(...)
     return "url(" + JSON.stringify(newUrl) + ")";
   });
-
-  // send back the fixed css
-  return fixedCss;
 };

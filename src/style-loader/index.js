@@ -31,7 +31,6 @@ module.exports = function() {};
 
 module.exports.pitch = function pitch(request) {
   const query = loaderUtils.getOptions(this) || {};
-  const loaders = this.loaders.slice(this.loaderIndex + 1);
   this.addDependency(this.resourcePath);
   const childFilename = "*"; // eslint-disable-line no-path-concat
   const publicPath = typeof query.publicPath === "string" ? query.publicPath : this._compilation.outputOptions.publicPath;
@@ -98,12 +97,10 @@ module.exports.pitch = function pitch(request) {
       }
     }
 
-    return callback(null, template() + "\n" + resultSource);
+    return callback(null, template(this, query) + "\n" + resultSource);
   });
 
-  function template() {
-    var options = loaderUtils.getOptions(this) || {};
-
+  function template(context, options) {
     validateOptions(require("./options.json"), options, "Style Loader");
 
     options.hmr = typeof options.hmr === "undefined" ? true : options.hmr;
@@ -127,8 +124,8 @@ module.exports.pitch = function pitch(request) {
       // Hot Module Replacement,
       "if(module.hot) {",
       // When the styles change, update the <style> tags
-      "	module.hot.accept(" + loaderUtils.stringifyRequest(this, "!!" + request) + ", function() {",
-      "		var newContent = require(" + loaderUtils.stringifyRequest(this, "!!" + request) + ");",
+      "	module.hot.accept(" + loaderUtils.stringifyRequest(context, "!!" + request) + ", function() {",
+      "		var newContent = require(" + loaderUtils.stringifyRequest(context, "!!" + request) + ");",
       "",
       "		if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];",
       "",
@@ -161,7 +158,7 @@ module.exports.pitch = function pitch(request) {
       // Adds CSS to the DOM by adding a <style> tag
       "",
       // Load styles
-      "var _content = require(" + loaderUtils.stringifyRequest(this, "!!" + request) + ");",
+      "var _content = require(" + loaderUtils.stringifyRequest(context, "!!" + request) + ");",
       "",
       "if(typeof _content === 'string') _content = [[module.id, _content, '']];",
       "",
@@ -170,7 +167,7 @@ module.exports.pitch = function pitch(request) {
       "var _insertInto;",
       "",
       options.transform
-        ? "_transform = require(" + loaderUtils.stringifyRequest(this, "!" + path.resolve(options.transform)) + ");"
+        ? "_transform = require(" + loaderUtils.stringifyRequest(context, "!" + path.resolve(options.transform)) + ");"
         : "",
       "",
       "var _options = " + JSON.stringify(options),
@@ -180,7 +177,7 @@ module.exports.pitch = function pitch(request) {
       "",
       // Add styles to the DOM
       "var _update = require(" +
-        loaderUtils.stringifyRequest(this, "!" + path.join(__dirname, "lib", "addStyles.js")) +
+        loaderUtils.stringifyRequest(context, "!" + path.join(__dirname, "lib", "addStyles.js")) +
         ")(_content, _options);",
       "",
       options.hmr ? hmr : ""

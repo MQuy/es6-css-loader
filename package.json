@@ -1,6 +1,6 @@
 {
   "name": "es6-css-loader",
-  "version": "0.1.5",
+  "version": "0.1.7",
   "description": "ES6 css loader",
   "main": "dist/index.js",
   "keywords": [
@@ -16,7 +16,8 @@
   "license": "MIT",
   "scripts": {
     "build": "cross-env NODE_ENV=production babel src -d dist --ignore 'src/**/*.test.js' --copy-files",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "defaults": "webpack-defaults"
   },
   "dependencies": {
     "loader-utils": "^1.1.0",

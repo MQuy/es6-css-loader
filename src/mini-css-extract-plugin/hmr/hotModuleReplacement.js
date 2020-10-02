@@ -16,7 +16,7 @@ const { forEach } = Array.prototype;
 function debounce(fn, time) {
   let timeout = 0;
 
-  return function() {
+  return function () {
     const self = this;
     // eslint-disable-next-line prefer-rest-params
     const args = arguments;
@@ -30,7 +30,7 @@ function debounce(fn, time) {
   };
 }
 
-function noop() {}
+function noop() { }
 
 function getCurrentScriptUrl(moduleId) {
   let src = srcByModuleId[moduleId];
@@ -50,7 +50,7 @@ function getCurrentScriptUrl(moduleId) {
     srcByModuleId[moduleId] = src;
   }
 
-  return function(fileMap) {
+  return function (fileMap) {
     if (!src) {
       return null;
     }
@@ -195,7 +195,7 @@ function isUrlRequest(url) {
   return true;
 }
 
-module.exports = function(moduleId, options) {
+module.exports = function (moduleId, options) {
   if (noDocument) {
     console.log('no window.document found, will not HMR CSS');
 
@@ -206,7 +206,7 @@ module.exports = function(moduleId, options) {
 
   function update() {
     const src = getScriptSrc(options.filename);
-    const reloaded = reloadStyle(src);
+    const reloaded = src ? reloadStyle(src) : true;
 
     if (options.locals) {
       console.log('[HMR] Detected local css modules. Reload all css');
